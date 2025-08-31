@@ -7,9 +7,10 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"../logistics"
+	"minicomp/logistics"
+    "minicomp/filelecture"
 	"time"
-	"../filelecture"
+	
 )
 
 func ShowMenu(r *bufio.Reader) int {
@@ -69,7 +70,7 @@ func main() {
 		case 2:
 			fmt.Println("You selected to compile all files in the directory.")
 			// Show the files in the txt-files directory
-			path := "./txt-files"
+			path := "./tests"
 			files := filelecture.ParseFiles(path)
 
 			fmt.Println("Executing all files in the directory...")
