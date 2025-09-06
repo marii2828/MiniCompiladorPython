@@ -18,5 +18,5 @@
 20	LOAD_FAST		acc
 21	STORE_FAST		result
 22	LOAD_FAST		result
-23	CALL_FUNCTION		print:1
+23	CALL_FUNCTION		Print
 24	END		

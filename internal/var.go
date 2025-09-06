@@ -13,7 +13,6 @@ type VarList struct {
 
 var LocalVarListVM *VarList = NewVarList()
 
-
 var GlobalVarListVM *VarList = NewVarList()
 
 func init() {
@@ -25,7 +24,6 @@ func NewVarList() *VarList {
 }
 
 func PrintVars(vl *VarList) {
-	fmt.Println("Current Variables:")
 	for _, v := range vl.Vars {
 		fmt.Printf("Name: %s, Value: %v\n", v.Name, v.Value)
 	}
@@ -76,4 +74,8 @@ func (vl *VarList) DeleteVar(name string) error {
 		}
 	}
 	return fmt.Errorf("Variable not found")
+}
+
+func (vl *VarList) Clear() {
+	vl.Vars = []Variable{}
 }

@@ -254,7 +254,7 @@ func OpJumpIfFalse(st *Stack[any], arg string) (int, bool) {
 
 // -------------------- Call (placeholder) --------------------
 // Depende de cómo representes funciones en "globals" (punteros a función, direcciones de código, etc.)
-func OpCallFunction(_ *Stack[any], _ *VarList, _ string) {
+func OpCallFunction(st *Stack[any], globals *VarList, name string) {
 	// para cuando llamen el print
 	if name == "Print" {
 		arg, err := st.Pop()
@@ -273,5 +273,5 @@ func OpCallFunction(_ *Stack[any], _ *VarList, _ string) {
 		panic("Nombre " + name + " no es función")
 	}
 	// TODO: implementar cuando definas convención (nombre+arity, o salto a dirección).
-	panic("CALL_FUNCTION: definir convención antes de implementar")
+	panic("CALL_FUNCTION: definir convención antes de implementar: " + name)
 }

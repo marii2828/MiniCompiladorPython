@@ -12,80 +12,80 @@ func RunVMLoop() {
 		in := list[ip]
 		next := ip + 1
 
-		//		filelecture.Instructions.PrintInstructions() // Llama a la función para imprimir las instrucciones
-		// Si quieres imprimir las instrucciones, llama a la función así:
-
 		switch in.Instruction {
 		case "LOAD_CONST":
 			OpLoadConst(&StackVM, in.Argument)
-			fmt.Println("Cargando constante:", in.Argument)
+			//fmt.Println("Cargando constante:", in.Argument)
 
 		case "LOAD_FAST":
 			OpLoadFast(&StackVM, LocalVarListVM, in.Argument)
-			fmt.Println("Cargando variable local:", in.Argument)
+			//fmt.Println("Cargando variable local:", in.Argument)
 
 		case "STORE_FAST":
 			OpStoreFast(&StackVM, LocalVarListVM, in.Argument)
-			fmt.Println("Almacenando en variable local:", in.Argument)
+			//fmt.Println("Almacenando en variable local:", in.Argument)
 
 		case "LOAD_GLOBAL":
 			OpLoadGlobal(&StackVM, GlobalVarListVM, in.Argument)
-			fmt.Println("Cargando variable global:", in.Argument)
+			//fmt.Println("Cargando variable global:", in.Argument)
 
 		case "CALL_FUNCTION":
 			OpCallFunction(&StackVM, GlobalVarListVM, in.Argument)
-			fmt.Println("Llamando a función:", in.Argument)
+			//fmt.Println("Llamando a función:", in.Argument)
 
 		case "COMPARE_OP":
 			OpCompare(&StackVM, in.Argument)
-			fmt.Println("Comparando con operador:", in.Argument)
+			//fmt.Println("Comparando con operador:", in.Argument)
 
 		case "BINARY_ADD", "BINARY_SUBSTRACT", "BINARY_MULTIPLY",
 			"BINARY_DIVIDE", "BINARY_MODULO":
 			OpBinary(&StackVM, in.Instruction)
-			fmt.Println("Operación binaria:", in.Instruction)
+			//fmt.Println("Operación binaria:", in.Instruction)
 
 		case "BINARY_AND", "BINARY_OR":
 			OpLogical(&StackVM, in.Instruction)
-			fmt.Println("Operación lógica binaria:", in.Instruction)
+			//fmt.Println("Operación lógica binaria:", in.Instruction)
 
 		case "STORE_SUBSCR":
 			OpStoreSubscr(&StackVM)
-			fmt.Println("Almacenando en subíndice")
+			//fmt.Println("Almacenando en subíndice")
 
 		case "BINARY_SUBSCR":
 			OpBinarySubscr(&StackVM)
-			fmt.Println("Accediendo a subíndice")
+			//fmt.Println("Accediendo a subíndice")
 
 		case "JUMP_ABSOLUTE":
 			if t, ok := OpJumpAbsolute(in.Argument); ok {
 				next = t
 			}
-			fmt.Println("Saltando a instrucción absoluta:", in.Argument)
+			//fmt.Println("Saltando a instrucción absoluta:", in.Argument)
 
 		case "JUMP_IF_TRUE":
 			if t, ok := OpJumpIfTrue(&StackVM, in.Argument); ok {
 				next = t
 			}
-			fmt.Println("Saltando si es verdadero a instrucción:", in.Argument)
+			//fmt.Println("Saltando si es verdadero a instrucción:", in.Argument)
 
 		case "JUMP_IF_FALSE":
 			if t, ok := OpJumpIfFalse(&StackVM, in.Argument); ok {
 				next = t
 			}
-			fmt.Println("Saltando si es falso a instrucción:", in.Argument)
+			//fmt.Println("Saltando si es falso a instrucción:", in.Argument)
 
 		case "BUILD_LIST":
 			OpBuildList(&StackVM, in.Argument)
-			fmt.Println("Construyendo lista con", in.Argument, "elementos")
+			//fmt.Println("Construyendo lista con", in.Argument, "elementos")
 
 		case "END":
-			fmt.Println("\n\nFin del programa")
+			fmt.Println("\n\n--Fin del programa--\n")
 			StackVM.PrintStack()
 			fmt.Println("\n\nVariables locales:")
 			PrintVars(LocalVarListVM)
 			fmt.Println("\n\nVariables globales:")
 			PrintVars(GlobalVarListVM)
+			GlobalVarListVM.Clear()
+			LocalVarListVM.Clear()
+			StackVM.Clear()
 
 			return
 

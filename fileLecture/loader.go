@@ -52,7 +52,7 @@ func (p *ProgramInstructions) addInstruction(content string) {
 			fmt.Printf("Advertencia: La línea '%s' no tiene el formato esperado y será omitida.\n", trimmedLine)
 		}
 	}
-	PrintInstructions(*p)
+	//PrintInstructions(*p)
 
 }
 

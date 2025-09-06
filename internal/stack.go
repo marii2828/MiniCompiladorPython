@@ -51,5 +51,8 @@ func (s *Stack[any]) PrintStack() {
 	for i := len(s.data) - 1; i >= 0; i-- {
 		fmt.Printf("  [%d]: %v (type: %T)\n", i, s.data[i], s.data[i])
 	}
-	fmt.Println("End of Stack")
+}
+
+func (s *Stack[T]) Clear() {
+	s.data = []T{}
 }
