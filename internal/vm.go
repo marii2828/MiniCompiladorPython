@@ -6,117 +6,94 @@ import (
 )
 
 func RunVMLoop() {
-	list := filelecture.GetInstructions()
+	list := filelecture.GetInstructions() // variables globales (p.ej. builtins)
 
-	for i, instr := range list {
-		v := parseConst(instr.Indexs)
-		if v == i {
-			switch instr.Instruction {
-				//Coloca el valor de la constante en el tope de la pila 
-			case "LOAD_CONST":
-				val := parseConst(instr.Argument) // convierte "7","4.5","'a'","\"hola\"", "True"/"False"
-				fmt.Printf("LOAD_CONST %v (type: %T)\n", val, val)
+	for ip := 0; ip < len(list); {
+		in := list[ip]
+		next := ip + 1
 
-				//Coloca el valor del contenido de la variable en la pila
-			case "LOAD_FAST":
-				val := parseConst(instr.Argument)
-				fmt.Printf("LOAD_FAST %v (type: %T)\n", val, val)
+		//		filelecture.Instructions.PrintInstructions() // Llama a la función para imprimir las instrucciones
+		// Si quieres imprimir las instrucciones, llama a la función así:
 
-				//Escribe el contenido del tope de la pila en la variable
-			case "STORE_FAST":
-				val := parseConst(instr.Argument)
-				fmt.Printf("STORE_FAST %v (type: %T)\n", val, val)
+		switch in.Instruction {
+		case "LOAD_CONST":
+			OpLoadConst(&StackVM, in.Argument)
+			fmt.Println("Cargando constante:", in.Argument)
 
-				//Carga en el tope de la pila o el valor de la variable o la referencia a la función
-			case "LOAD_GLOBAL":
-				val := parseConst(instr.Argument)
-				fmt.Printf("LOAD_GLOBAL %v (type: %T)\n", val, val)
+		case "LOAD_FAST":
+			OpLoadFast(&StackVM, LocalVarListVM, in.Argument)
+			fmt.Println("Cargando variable local:", in.Argument)
 
-				//Realiza un salto a la dirección de código de la función
-			case "CALL_FUNCTION":
-				val := parseConst(instr.Argument)
-				fmt.Printf("CALL_FUNCTION %v (type: %T)\n", val, val)
+		case "STORE_FAST":
+			OpStoreFast(&StackVM, LocalVarListVM, in.Argument)
+			fmt.Println("Almacenando en variable local:", in.Argument)
 
-				//Realiza una comparación booleana según el op que reciba
-			case "COMPARE_OP":
-				val := parseConst(instr.Argument)
-				fmt.Printf("COMPARE_OP %v (type: %T)\n", val, val)
+		case "LOAD_GLOBAL":
+			OpLoadGlobal(&StackVM, GlobalVarListVM, in.Argument)
+			fmt.Println("Cargando variable global:", in.Argument)
 
-				//Realiza una resta de operandos
-			case "BINARY_SUBSTRACT":
-				val := parseConst(instr.Argument)
-				fmt.Printf("BINARY_SUBSTRACT %v (type: %T)\n", val, val)
+		case "CALL_FUNCTION":
+			OpCallFunction(&StackVM, GlobalVarListVM, in.Argument)
+			fmt.Println("Llamando a función:", in.Argument)
 
-				//Realiza una suma de operandos
-			case "BINARY_ADD":
-				val := parseConst(instr.Argument)
-				fmt.Printf("BINARY_ADD %v (type: %T)\n", val, val)
+		case "COMPARE_OP":
+			OpCompare(&StackVM, in.Argument)
+			fmt.Println("Comparando con operador:", in.Argument)
 
-				//Realiza una multiplicación de operandos
-			case "BINARY_MULTIPLY":
-				val := parseConst(instr.Argument)
-				fmt.Printf("BINARY_MULTIPLY %v (type: %T)\n", val, val)
+		case "BINARY_ADD", "BINARY_SUBSTRACT", "BINARY_MULTIPLY",
+			"BINARY_DIVIDE", "BINARY_MODULO":
+			OpBinary(&StackVM, in.Instruction)
+			fmt.Println("Operación binaria:", in.Instruction)
 
-				//Realiza una división entera de operandos
-			case "BINARY_DIVIDE":
-				val := parseConst(instr.Argument)
-				fmt.Printf("BINARY_DIVIDE %v (type: %T)\n", val, val)
+		case "BINARY_AND", "BINARY_OR":
+			OpLogical(&StackVM, in.Instruction)
+			fmt.Println("Operación lógica binaria:", in.Instruction)
 
-				//Realiza un AND lógico
-			case "BINARY_AND":
-				val := parseConst(instr.Argument)
-				fmt.Printf("BINARY_AND %v (type: %T)\n", val, val)
+		case "STORE_SUBSCR":
+			OpStoreSubscr(&StackVM)
+			fmt.Println("Almacenando en subíndice")
 
-				//Realiza un OR lógico
-			case "BINARY_OR":
-				val := parseConst(instr.Argument)
-				fmt.Printf("BINARY_OR %v (type: %T)\n", val, val)
+		case "BINARY_SUBSCR":
+			OpBinarySubscr(&StackVM)
+			fmt.Println("Accediendo a subíndice")
 
-				//Realiza el cálculo del cociente de la división de dos operandos
-			case "BINARY_MODULO":
-				val := parseConst(instr.Argument)
-				fmt.Printf("BINARY_MODULO %v (type: %T)\n", val, val)
-
-				//Realiza la operación:array[index] = value
-			case "STORE_SUBSCR":
-				val := parseConst(instr.Argument)
-				fmt.Printf("STORE_SUBSCR %v (type: %T)\n", val, val)
-
-				//Carga en el tope de la pila el elemento de un arreglo en el índice indicado
-			case "BINARY_SUBSCR":
-				val := parseConst(instr.Argument)
-				fmt.Printf("BINARY_SUBSCR %v (type: %T)\n", val, val)
-
-				//Salta a la línea de código indicada por “target”
-			case "JUMP_ABSOLUTE":
-				val := parseConst(instr.Argument)
-				fmt.Printf("JUMP_ABSOLUTE %v (type: %T)\n", val, val)
-
-				//Si el tope de la pila es True, salta a “target”
-			case "JUMP_IF_TRUE":
-				val := parseConst(instr.Argument)
-				fmt.Printf("JUMP_IF_TRUE %v (type: %T)\n", val, val)
-
-				//Si el tope de la pila es False, salta a “target”
-			case "JUMP_IF_FALSE":
-				val := parseConst(instr.Argument)
-				fmt.Printf("JUMP_IF_FALSE %v (type: %T)\n", val, val)
-
-				//Construye una lista con “elements” cantidad de elementos
-			case "BUILD_LIST":
-				val := parseConst(instr.Argument)
-				fmt.Printf("BUILD_LIST %v (type: %T)\n", val, val)
-
-				//Termina el programa
-			case "END":
-				fmt.Println("END")
-			default:
-				fmt.Printf("Instrucción no reconocida: %s\n", instr.Instruction)
+		case "JUMP_ABSOLUTE":
+			if t, ok := OpJumpAbsolute(in.Argument); ok {
+				next = t
 			}
-		} else {
-			fmt.Printf("WRONG INSTRUCTION INDEX\nThere seems to be a problem with the instruction: %s\n", instr.Instruction)
-			// Handle the error (e.g., log it, skip the instruction, etc.) Empty stack, invalid instruction, etc.
+			fmt.Println("Saltando a instrucción absoluta:", in.Argument)
+
+		case "JUMP_IF_TRUE":
+			if t, ok := OpJumpIfTrue(&StackVM, in.Argument); ok {
+				next = t
+			}
+			fmt.Println("Saltando si es verdadero a instrucción:", in.Argument)
+
+		case "JUMP_IF_FALSE":
+			if t, ok := OpJumpIfFalse(&StackVM, in.Argument); ok {
+				next = t
+			}
+			fmt.Println("Saltando si es falso a instrucción:", in.Argument)
+
+		case "BUILD_LIST":
+			OpBuildList(&StackVM, in.Argument)
+			fmt.Println("Construyendo lista con", in.Argument, "elementos")
+
+		case "END":
+			fmt.Println("\n\nFin del programa")
+			StackVM.PrintStack()
+			fmt.Println("\n\nVariables locales:")
+			PrintVars(LocalVarListVM)
+			fmt.Println("\n\nVariables globales:")
+			PrintVars(GlobalVarListVM)
+
+			return
+
+		default:
+			panic("opcode desconocido: " + in.Instruction)
 		}
+
+		ip = next
 	}
 }
 
@@ -147,5 +124,5 @@ func parseConst(param string) interface{} {
 	}
 	return param
 
-	//I think type list exists but i have to ask something first 
+	//I think type list exists but i have to ask something first
 }

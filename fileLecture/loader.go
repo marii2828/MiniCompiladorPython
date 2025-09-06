@@ -1,26 +1,33 @@
 package filelecture
 
 import (
-    "fmt"
-    "os"
-    "strings"
+	"fmt"
 	"log"
+	"os"
+	"strings"
 )
 
-//struct containing the main parts of the instructions on the txt file
+// struct containing the main parts of the instructions on the txt file
 type Instructions struct {
-    Indexs     string
-    Instruction string
-    Argument    string
+	Indexs      string
+	Instruction string
+	Argument    string
 }
 
-//type alias fo a slice of the struct "instructions" 
+// type alias fo a slice of the struct "instructions"
 type ProgramInstructions []Instructions
 
-//instance of the slice
+func PrintInstructions(InstructionsList ProgramInstructions) {
+	fmt.Println("Current Instructions:")
+	for _, instr := range InstructionsList {
+		fmt.Printf("Index: %s, Instruction: %s, Argument: %s\n", instr.Indexs, instr.Instruction, instr.Argument)
+	}
+}
+
+// instance of the slice
 var InstructionsList ProgramInstructions
 
-//method to process the content of the file and add instructions to the slice
+// method to process the content of the file and add instructions to the slice
 func (p *ProgramInstructions) addInstruction(content string) {
 	lines := strings.Split(content, "\n")
 	for _, line := range lines {
@@ -29,18 +36,24 @@ func (p *ProgramInstructions) addInstruction(content string) {
 			continue
 		}
 		parts := strings.Fields(trimmedLine)
-		if len(parts) >= 3 {
+
+		if len(parts) >= 2 { // <— antes pedías >= 3
+			arg := ""
+			if len(parts) > 2 {
+				arg = strings.Join(parts[2:], " ")
+			}
 			newInstruction := Instructions{
-				Indexs:     parts[0],
+				Indexs:      parts[0],
 				Instruction: parts[1],
-				Argument:    strings.Join(parts[2:], " "),
+				Argument:    arg,
 			}
 			*p = append(*p, newInstruction)
 		} else {
 			fmt.Printf("Advertencia: La línea '%s' no tiene el formato esperado y será omitida.\n", trimmedLine)
 		}
 	}
-	fmt.Println("Procesamiento terminado.")
+	PrintInstructions(*p)
+
 }
 
 func ReadFile(filePath string) {
@@ -61,17 +74,17 @@ func ReadFile(filePath string) {
 	InstructionsList.addInstruction(string(fileContent))
 }
 
-func ParseFiles(filePath string) []os.DirEntry{
+func ParseFiles(filePath string) []os.DirEntry {
 
 	files, err := os.ReadDir(filePath)
-			if err != nil {
-				log.Fatal("Error finding tests:", err)
-			}
+	if err != nil {
+		log.Fatal("Error finding tests:", err)
+	}
 
 	return files
 }
 
-//Returns the instructions list
+// Returns the instructions list
 func GetInstructions() ProgramInstructions {
 	return InstructionsList
 }
