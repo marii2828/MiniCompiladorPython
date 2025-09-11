@@ -11,7 +11,7 @@ func asFloat(v any) float64 {
 	case float64:
 		return x
 	default:
-		panic(fmt.Errorf("no numérico: %T", v))
+		panic(fmt.Errorf("Not a number: %T", v))
 	}
 }
 
@@ -22,7 +22,7 @@ func toInt(v any) int {
 	case float64:
 		return int(x)
 	default:
-		panic(fmt.Errorf("no entero: %T", v))
+		panic(fmt.Errorf("Not an integer: %T", v))
 	}
 }
 
@@ -48,17 +48,17 @@ func applySubscr(container, index any) any {
 	case []any:
 		i := toInt(index)
 		if i < 0 || i >= len(c) {
-			panic(fmt.Errorf("índice fuera de rango"))
+			panic(fmt.Errorf("Index out of range"))
 		}
 		return c[i]
 	case string:
 		i := toInt(index)
 		if i < 0 || i >= len(c) {
-			panic(fmt.Errorf("índice fuera de rango"))
+			panic(fmt.Errorf("Index out of range"))
 		}
 		return string(c[i])
 	default:
-		panic(fmt.Errorf("subscript no soportado para %T", container))
+		panic(fmt.Errorf("subscript not supported for %T", container))
 	}
 }
 
@@ -67,11 +67,11 @@ func applyStoreSubscr(container, index, value any) {
 	case []any:
 		i := toInt(index)
 		if i < 0 || i >= len(c) {
-			panic(fmt.Errorf("índice fuera de rango"))
+			panic(fmt.Errorf("Index out of range"))
 		}
 		c[i] = value
 	default:
-		panic(fmt.Errorf("STORE_SUBSCR no soportado para %T", container))
+		panic(fmt.Errorf("STORE_SUBSCR not supported for %T", container))
 	}
 }
 
@@ -86,7 +86,7 @@ func OpLoadFast(st *Stack[any], locals *VarList, name string) {
 	// Evitamos GetVar por bug; usamos searchVar porque estamos en el mismo paquete
 	v := locals.searchVar(name) // :contentReference[oaicite:4]{index=4}
 	if v == nil {
-		panic(fmt.Errorf("LOAD_FAST: variable '%s' no definida", name))
+		panic(fmt.Errorf("LOAD_FAST: variable '%s' not defined", name))
 	}
 	st.Push(v.Value)
 }
@@ -109,7 +109,7 @@ func OpStoreFast(st *Stack[any], locals *VarList, name string) {
 func OpLoadGlobal(st *Stack[any], globals *VarList, name string) {
 	v := globals.searchVar(name)
 	if v == nil {
-		panic(fmt.Errorf("LOAD_GLOBAL: '%s' no definido", name))
+		panic(fmt.Errorf("LOAD_GLOBAL: '%s' not defined", name))
 	}
 	st.Push(v.Value)
 }
@@ -141,14 +141,14 @@ func OpBinary(st *Stack[any], kind string) {
 	case "BINARY_DIVIDE":
 		den := asFloat(b)
 		if den == 0 {
-			panic("división por cero")
+			panic("division by zero")
 		}
 		st.Push(asFloat(a) / den)
 	case "BINARY_MODULO":
 		st.Push(float64(int(asFloat(a)) % int(asFloat(b))))
 
 	default:
-		panic("op binaria no soportada: " + kind)
+		panic("opcode not supported: " + kind)
 	}
 }
 
@@ -167,7 +167,7 @@ func OpLogical(st *Stack[any], kind string) {
 	case "BINARY_OR":
 		st.Push(truthy(a) || truthy(b))
 	default:
-		panic("op lógica no soportada: " + kind)
+		panic("logical op not supported: " + kind)
 	}
 }
 
@@ -194,7 +194,7 @@ func OpCompare(st *Stack[any], op string) {
 	case ">=":
 		st.Push(asFloat(a) >= asFloat(b))
 	default:
-		panic("COMPARE_OP desconocido: " + op)
+		panic("COMPARE_OP not supported: " + op)
 	}
 }
 
@@ -203,7 +203,7 @@ func OpCompare(st *Stack[any], op string) {
 func OpBuildList(st *Stack[any], arg string) {
 	n := toInt(parseConst(arg))
 	if st.Size() < n {
-		panic("BUILD_LIST: elementos insuficientes")
+		panic("BUILD_LIST: insufficient elements on stack")
 	}
 	out := make([]any, n)
 	for i := n - 1; i >= 0; i-- {
@@ -252,9 +252,40 @@ func OpJumpIfFalse(st *Stack[any], arg string) (int, bool) {
 	return -1, false
 }
 
-// -------------------- Call (placeholder) --------------------
-// Depende de cómo representes funciones en "globals" (punteros a función, direcciones de código, etc.)
-func OpCallFunction(_ *Stack[any], _ *VarList, _ string) {
-	// TODO: implementar cuando definas convención (nombre+arity, o salto a dirección).
-	panic("CALL_FUNCTION: definir convención antes de implementar")
+func OpCallFunction(st *Stack[any], globals *VarList, _ string) {
+	// 1. Sacar el número de argumentos
+	nargsAny, err := st.Pop()
+	if err != nil {
+		panic(err)
+	}
+	nargs := toInt(nargsAny)
+
+	// 2. Sacar los argumentos
+	args := make([]interface{}, nargs)
+	for i := nargs - 1; i >= 0; i-- {
+		arg, err := st.Pop()
+		if err != nil {
+			panic(err)
+		}
+		args[i] = arg
+	}
+
+	// 3. Sacar la función (que está debajo de los argumentos)
+	fnAny, err := st.Pop()
+	if err != nil {
+		panic(err)
+	}
+	// Permitir funciones con cualquier tipo de retorno
+	switch fn := fnAny.(type) {
+	case func(...interface{}):
+		fn(args...)
+	case func(...interface{}) error:
+		_ = fn(args...)
+	case func(...interface{}) (int, error):
+		_, _ = fn(args...)
+	case func(...interface{}) int:
+		_ = fn(args...)
+	default:
+		panic(fmt.Errorf("CALL_FUNCTION: not a function, got %T", fnAny))
+	}
 }

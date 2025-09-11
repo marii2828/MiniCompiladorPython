@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+    "time"
 )
 
 //ANSI escape codes for colors
@@ -68,8 +69,11 @@ func showFiles(r *bufio.Reader) {
         return
     }
     
+    time.Sleep(1 * time.Second)
+    logistics.ClearConsole()
+
     f := files[num-1]
-    fmt.Println("You selected the file:", f.Name())
+    fmt.Println("\nYou selected the file:", Blue + f.Name() + Reset)
     
     filelecture.ReadFile(path + "/" + f.Name())
 }
@@ -95,24 +99,26 @@ func main() {
             } else {
                 fmt.Println("Executing all files in the directory...")
                 for _, f := range files {
-                    fmt.Println("\nExecuting file:", f.Name())
+                    fmt.Println("\nExecuting file:", Blue + f.Name() + Reset)
                     filelecture.ReadFile(path + "/" + f.Name())
                     internal.RunVMLoop()
                     fmt.Println("\n")
                 }
             }
+            time.Sleep(1 * time.Second)
+            logistics.ClearConsole()
 
         case 3:
-            fmt.Println("Exiting the program. Goodbye!")
+            fmt.Println(Blue + "\nExiting the program. Goodbye!" + Reset)
             os.Exit(0)
         default:
-            fmt.Println("Invalid option. Please try again.")
+            fmt.Println(Green + "\nInvalid option. Please try again." + Reset)
         }
 		
         // Pause before looping back to the menu
         if option >= 1 && option <= 2 {
-            fmt.Println("\nPress Enter to continue...")
-            reader.ReadString('\n') 
+            fmt.Println(Blue + "\nPress Enter to continue..." + Reset)
+            reader.ReadString('\n')
         }
     }
 }

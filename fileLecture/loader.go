@@ -18,10 +18,11 @@ type Instructions struct {
 type ProgramInstructions []Instructions
 
 func PrintInstructions(InstructionsList ProgramInstructions) {
-	fmt.Println("Current Instructions:")
+	fmt.Println("\n\n---------------- INSTRUCTIONS LOADED ----------------")
 	for _, instr := range InstructionsList {
 		fmt.Printf("Index: %s, Instruction: %s, Argument: %s\n", instr.Indexs, instr.Instruction, instr.Argument)
 	}
+	fmt.Println("\n\n------------------EXECUTION------------------------\n")
 }
 
 // instance of the slice
@@ -49,7 +50,7 @@ func (p *ProgramInstructions) addInstruction(content string) {
 			}
 			*p = append(*p, newInstruction)
 		} else {
-			fmt.Printf("Advertencia: La línea '%s' no tiene el formato esperado y será omitida.\n", trimmedLine)
+			fmt.Printf("Warning: Line '%s' does not have the expected format and will be omitted.\n", trimmedLine)
 		}
 	}
 	PrintInstructions(*p)
@@ -65,7 +66,7 @@ func ReadFile(filePath string) {
 
 	fileContent, err := os.ReadFile(filePath)
 	if err != nil {
-		fmt.Println("Error al leer el archivo:", err)
+		fmt.Println("Error reading file:", err)
 		return
 	}
 

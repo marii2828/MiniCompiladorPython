@@ -47,9 +47,11 @@ func (s *Stack[T]) Reset() {
 }
 
 func (s *Stack[any]) PrintStack() {
-	fmt.Println("Stack contents:")
+	fmt.Println("\n\n----------------STACK CONTENT (RESULT)----------------")
 	for i := len(s.data) - 1; i >= 0; i-- {
 		fmt.Printf("  [%d]: %v (type: %T)\n", i, s.data[i], s.data[i])
 	}
-	fmt.Println("End of Stack")
+	fmt.Println("\n----------------END OF STACK----------------")
 }
+
+

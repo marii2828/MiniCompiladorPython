@@ -20,7 +20,7 @@ func NewVarList() *VarList {
 }
 
 func PrintVars(vl *VarList) {
-	fmt.Println("Current Variables:")
+	fmt.Println("\nCurrent Variables:")
 	for _, v := range vl.Vars {
 		fmt.Printf("Name: %s, Value: %v\n", v.Name, v.Value)
 	}
@@ -71,4 +71,8 @@ func (vl *VarList) DeleteVar(name string) error {
 		}
 	}
 	return fmt.Errorf("Variable not found")
+}
+
+func init() {
+	GlobalVarListVM.AddVar("print", fmt.Println)
 }
