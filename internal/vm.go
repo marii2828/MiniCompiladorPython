@@ -29,17 +29,17 @@ func RunVMLoop() {
 			fmt.Println("Storing in local variable:", in.Argument)
 
 		case "LOAD_GLOBAL":
-			PrintVars(GlobalVarListVM)
+			// PrintVars(GlobalVarListVM)
 			OpLoadGlobal(&StackVM, GlobalVarListVM, in.Argument)
 			fmt.Println("Loading global variable:", in.Argument)
 
 		case "CALL_FUNCTION":
-			fmt.Println("Calling function:", in.Argument)
-			PrintVars(GlobalVarListVM)
-			PrintVars(LocalVarListVM)
-			StackVM.PrintStack()
+			// fmt.Println("Calling function:", in.Argument)
+			// PrintVars(GlobalVarListVM)
+			// PrintVars(LocalVarListVM)
+			// StackVM.PrintStack()
 			OpCallFunction(&StackVM, GlobalVarListVM, in.Argument)
-			//fmt.Println("Calling function:", in.Argument)
+			fmt.Println("Calling function:", in.Argument)
 
 		case "COMPARE_OP":
 			OpCompare(&StackVM, in.Argument)

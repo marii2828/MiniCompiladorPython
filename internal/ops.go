@@ -48,13 +48,13 @@ func applySubscr(container, index any) any {
 	case []any:
 		i := toInt(index)
 		if i < 0 || i >= len(c) {
-			panic(fmt.Errorf("Index out of range"))
+			panic(fmt.Errorf("Index out of range (len=%d, i=%d)", len(c), i))
 		}
 		return c[i]
 	case string:
 		i := toInt(index)
 		if i < 0 || i >= len(c) {
-			panic(fmt.Errorf("Index out of range"))
+			panic(fmt.Errorf("Index out of range (len=%d, i=%d)", len(c), i))
 		}
 		return string(c[i])
 	default:
@@ -67,7 +67,7 @@ func applyStoreSubscr(container, index, value any) {
 	case []any:
 		i := toInt(index)
 		if i < 0 || i >= len(c) {
-			panic(fmt.Errorf("Index out of range"))
+			panic(fmt.Errorf("STORE_SUBSCR: index out of range (len=%d, i=%d)", len(c), i))
 		}
 		c[i] = value
 	default:
@@ -83,8 +83,7 @@ func OpLoadConst(st *Stack[any], arg string) {
 }
 
 func OpLoadFast(st *Stack[any], locals *VarList, name string) {
-	// Evitamos GetVar por bug; usamos searchVar porque estamos en el mismo paquete
-	v := locals.searchVar(name) // :contentReference[oaicite:4]{index=4}
+	v := locals.searchVar(name)
 	if v == nil {
 		panic(fmt.Errorf("LOAD_FAST: variable '%s' not defined", name))
 	}
@@ -92,11 +91,10 @@ func OpLoadFast(st *Stack[any], locals *VarList, name string) {
 }
 
 func OpStoreFast(st *Stack[any], locals *VarList, name string) {
-	val, err := st.Pop()
-	if err != nil {
-		panic(err)
+	if err := st.Ensure(1); err != nil {
+		panic(fmt.Errorf("STORE_FAST: %w", err))
 	}
-	// Si existe, set; si no, la creamos (más práctico que fallar)
+	val, _ := st.Pop()
 	if v := locals.searchVar(name); v != nil {
 		v.Value = val
 		return
@@ -117,18 +115,14 @@ func OpLoadGlobal(st *Stack[any], globals *VarList, name string) {
 // -------------------- Aritmética / lógica --------------------
 
 func OpBinary(st *Stack[any], kind string) {
-	b, err := st.Pop()
-	if err != nil {
-		panic(err)
+	if err := st.Ensure(2); err != nil {
+		panic(fmt.Errorf("%s: %w", kind, err))
 	}
-	a, err := st.Pop()
-	if err != nil {
-		panic(err)
-	}
+	b, _ := st.Pop()
+	a, _ := st.Pop()
 
 	switch kind {
 	case "BINARY_ADD":
-		// suma numérica y concatenación string
 		if sa, ok := a.(string); ok {
 			st.Push(sa + fmt.Sprintf("%v", b))
 			return
@@ -146,21 +140,17 @@ func OpBinary(st *Stack[any], kind string) {
 		st.Push(asFloat(a) / den)
 	case "BINARY_MODULO":
 		st.Push(float64(int(asFloat(a)) % int(asFloat(b))))
-
 	default:
 		panic("opcode not supported: " + kind)
 	}
 }
 
 func OpLogical(st *Stack[any], kind string) {
-	b, err := st.Pop()
-	if err != nil {
-		panic(err)
+	if err := st.Ensure(2); err != nil {
+		panic(fmt.Errorf("%s: %w", kind, err))
 	}
-	a, err := st.Pop()
-	if err != nil {
-		panic(err)
-	}
+	b, _ := st.Pop()
+	a, _ := st.Pop()
 	switch kind {
 	case "BINARY_AND":
 		st.Push(truthy(a) && truthy(b))
@@ -172,14 +162,11 @@ func OpLogical(st *Stack[any], kind string) {
 }
 
 func OpCompare(st *Stack[any], op string) {
-	b, err := st.Pop()
-	if err != nil {
-		panic(err)
+	if err := st.Ensure(2); err != nil {
+		panic(fmt.Errorf("COMPARE_OP: %w", err))
 	}
-	a, err := st.Pop()
-	if err != nil {
-		panic(err)
-	}
+	b, _ := st.Pop()
+	a, _ := st.Pop()
 	switch op {
 	case "==":
 		st.Push(fmt.Sprintf("%v", a) == fmt.Sprintf("%v", b))
@@ -202,24 +189,26 @@ func OpCompare(st *Stack[any], op string) {
 
 func OpBuildList(st *Stack[any], arg string) {
 	n := toInt(parseConst(arg))
-	if st.Size() < n {
-		panic("BUILD_LIST: insufficient elements on stack")
+	if err := st.Ensure(n); err != nil {
+		panic(fmt.Errorf("BUILD_LIST: need %d elements, have %d", n, st.Size()))
 	}
-	out := make([]any, n)
-	for i := n - 1; i >= 0; i-- {
-		v, _ := st.Pop()
-		out[i] = v
-	}
-	st.Push(out)
+	items, _ := st.PopN(n)
+	st.Push(items)
 }
 
 func OpBinarySubscr(st *Stack[any]) {
+	if err := st.Ensure(2); err != nil {
+		panic(fmt.Errorf("BINARY_SUBSCR: %w", err))
+	}
 	idx, _ := st.Pop()
 	cont, _ := st.Pop()
 	st.Push(applySubscr(cont, idx))
 }
 
 func OpStoreSubscr(st *Stack[any]) {
+	if err := st.Ensure(3); err != nil {
+		panic(fmt.Errorf("STORE_SUBSCR: %w", err))
+	}
 	val, _ := st.Pop()
 	idx, _ := st.Pop()
 	cont, _ := st.Pop()
@@ -228,13 +217,15 @@ func OpStoreSubscr(st *Stack[any]) {
 }
 
 // -------------------- Control de flujo --------------------
-// Devuelven (nuevoIP, jumped). Si jumped==false, ignorar retorno.
 
 func OpJumpAbsolute(arg string) (int, bool) {
 	return toInt(parseConst(arg)), true
 }
 
 func OpJumpIfTrue(st *Stack[any], arg string) (int, bool) {
+	if err := st.Ensure(1); err != nil {
+		panic(fmt.Errorf("JUMP_IF_TRUE: %w", err))
+	}
 	target := toInt(parseConst(arg))
 	cond, _ := st.Pop()
 	if truthy(cond) {
@@ -244,6 +235,9 @@ func OpJumpIfTrue(st *Stack[any], arg string) (int, bool) {
 }
 
 func OpJumpIfFalse(st *Stack[any], arg string) (int, bool) {
+	if err := st.Ensure(1); err != nil {
+		panic(fmt.Errorf("JUMP_IF_FALSE: %w", err))
+	}
 	target := toInt(parseConst(arg))
 	cond, _ := st.Pop()
 	if !truthy(cond) {
@@ -252,30 +246,27 @@ func OpJumpIfFalse(st *Stack[any], arg string) (int, bool) {
 	return -1, false
 }
 
-func OpCallFunction(st *Stack[any], globals *VarList, _ string) {
-	// 1. Sacar el número de argumentos
-	nargsAny, err := st.Pop()
-	if err != nil {
-		panic(err)
-	}
-	nargs := toInt(nargsAny)
+// -------------------- Call --------------------
 
-	// 2. Sacar los argumentos
-	args := make([]interface{}, nargs)
-	for i := nargs - 1; i >= 0; i-- {
-		arg, err := st.Pop()
-		if err != nil {
-			panic(err)
+func OpCallFunction(st *Stack[any], globals *VarList, arg string) {
+	var nargs int
+	if arg != "" {
+		nargs = toInt(parseConst(arg)) // usa argumento textual si existe
+	} else {
+		if err := st.Ensure(1); err != nil {
+			panic(fmt.Errorf("CALL_FUNCTION: %w (missing nargs)", err))
 		}
-		args[i] = arg
+		nargsAny, _ := st.Pop()
+		nargs = toInt(nargsAny)
 	}
 
-	// 3. Sacar la función (que está debajo de los argumentos)
-	fnAny, err := st.Pop()
-	if err != nil {
-		panic(err)
+	if err := st.Ensure(nargs + 1); err != nil {
+		panic(fmt.Errorf("CALL_FUNCTION: need %d items (args+fn), have %d", nargs+1, st.Size()))
 	}
-	// Permitir funciones con cualquier tipo de retorno
+
+	args, _ := st.PopN(nargs)
+	fnAny, _ := st.Pop()
+
 	switch fn := fnAny.(type) {
 	case func(...interface{}):
 		fn(args...)
